@@ -7,12 +7,25 @@
     "build": "tsc",
     "start": "node dist/app.js",
     "dev": "ts-node-dev --respawn --transpile-only src/app.ts",
+    "clean": "rimraf dist",
     "test": "jest",
     "lint": "eslint src/**/*.ts",
-    "lint:fix": "eslint src/**/*.ts --fix"
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "prebuild": "npm run clean",
+    "prisma:generate": "prisma generate",
+    "prisma:push": "prisma db push",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "news",
+    "scraper",
+    "telegram",
+    "bot",
+    "prisma",
+    "gambia"
+  ],
+  "author": "Ahmed Eyan Jeng",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
