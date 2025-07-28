@@ -66,6 +66,83 @@ export class NewsService {
     }
   }
 
+  async getArticleById(id: string): Promise<NewsResponse> {
+    try {
+      const article = await prisma.article.findUnique({
+        where: { id },
+      });
+
+      if (!article) {
+        return {
+          success: false,
+          data: [],
+          count: 0,
+          sources: [],
+          scrapedAt: new Date(),
+          error: 'Article not found',
+          duplicatesRemoved: 0,
+          healthStatus: HealthMonitoringService.getHealthStatus() as any,
+        };
+      }
+
+      return {
+        success: true,
+        data: [{ ...article, hash: article.hash ?? undefined }],
+        count: 1,
+        sources: [article.source],
+        scrapedAt: new Date(),
+        duplicatesRemoved: 0,
+        healthStatus: HealthMonitoringService.getHealthStatus() as any,
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      logger.error('Error in getArticleById:', { error: errorMessage });
+      return {
+        success: false,
+        data: [],
+        count: 0,
+        sources: [],
+        scrapedAt: new Date(),
+        error: errorMessage,
+        duplicatesRemoved: 0,
+        healthStatus: HealthMonitoringService.getHealthStatus() as any,
+      };
+    }
+  }
+
+  async getLatestArticles(): Promise<NewsResponse> {
+    try {
+      const articlesFromDb = await prisma.article.findMany({
+        orderBy: { scrapedAt: 'desc' },
+        take: 10,
+      });
+      const articles = articlesFromDb.map(a => ({ ...a, hash: a.hash ?? undefined }));
+
+      return {
+        success: true,
+        data: articles,
+        count: articles.length,
+        sources: [...new Set(articles.map(a => a.source))],
+        scrapedAt: new Date(),
+        duplicatesRemoved: 0,
+        healthStatus: HealthMonitoringService.getHealthStatus() as any,
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      logger.error('Error in getLatestArticles:', { error: errorMessage });
+      return {
+        success: false,
+        data: [],
+        count: 0,
+        sources: [],
+        scrapedAt: new Date(),
+        error: errorMessage,
+        duplicatesRemoved: 0,
+        healthStatus: HealthMonitoringService.getHealthStatus() as any,
+      };
+    }
+  }
+
   async getNewsBySource(sourceName: string): Promise<NewsResponse> {
     try {
       const articlesFromDb = await prisma.article.findMany({
