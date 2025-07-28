@@ -9,6 +9,7 @@ import { newsSources } from './config/news-sources';
 import { config } from './config';
 import cron from 'node-cron';
 import { scrapeAndSaveAllNews } from './services/scraper.service';
+import './utils/telegram';
 
 const app = express();
 
