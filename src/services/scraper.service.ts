@@ -4,6 +4,7 @@ import { Article, NewsSource, ScrapingResult } from '../models/article.model';
 import { config } from '../config';
 import { logger } from '../utils/logger';
 import { delay } from '../utils/delay';
+import { newsSources } from '../config/news-sources';
 import pLimit from 'p-limit';
 import prisma from '../utils/prisma';
 
@@ -23,18 +24,72 @@ export class ScraperService {
     try {
       const response = await this.fetchPage(link);
       const $ = cheerio.load(response.data);
-      // Extract all matching content elements and join their text
+      
       const contentElements = $(source.selectors.content);
       const content = contentElements
-        .map((_, el) => $(el).text().trim())
+        .map((_, el) => this.extractFormattedText($(el)))
         .get()
-        .join('\n');
+        .join('\n\n');
+        
       return content || 'No content found';
     } catch (error) {
       logger.error('Error extracting content from detail page:', { error, link });
       return 'No content found';
     }
   }
+
+private extractFormattedText($element: cheerio.Cheerio<any>): string {
+  const $cloned = $element.clone();
+  
+  $cloned.find('p').each((_, el) => {
+    const $p = $cloned.find(el);
+    const htmlContent = $p.html();
+    if (htmlContent) {
+      $p.after('\n\n').replaceWith(htmlContent);
+    }
+  });
+  
+  $cloned.find('br').replaceWith('\n');
+  $cloned.find('div').each((_, el) => {
+    const $div = $cloned.find(el);
+    const htmlContent = $div.html();
+    if (htmlContent) {
+      $div.after('\n').replaceWith(htmlContent);
+    }
+  });
+  
+  $cloned.find('li').each((_, el) => {
+    const $li = $cloned.find(el);
+    $li.before('• ').after('\n');
+  });
+  
+  $cloned.find('ul, ol').each((_, el) => {
+    const $list = $cloned.find(el);
+    $list.before('\n').after('\n');
+  });
+  
+  $cloned.find('h1, h2, h3, h4, h5, h6').each((_, el) => {
+    const $heading = $cloned.find(el);
+    $heading.before('\n\n').after('\n\n');
+  });
+  
+  $cloned.find('blockquote').each((_, el) => {
+    const $quote = $cloned.find(el);
+    const text = $quote.text().trim();
+    $quote.replaceWith(`\n\n"${text}"\n\n`);
+  });
+  
+  let text = $cloned.text();
+  
+  text = text
+    .replace(/\n\s*\n\s*\n/g, '\n\n')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n /g, '\n')
+    .replace(/ \n/g, '\n')
+    .trim();
+  
+  return text;
+}
 
   private async extractArticleData(
     element: any,
@@ -73,7 +128,7 @@ export class ScraperService {
         article.content = await this.extractContentFromDetailPage(article.link, source);
       } else {
         const contentElement = $(element).find(source.selectors.content).first();
-        article.content = contentElement.text().trim() || 'No content found';
+        article.content = this.extractFormattedText(contentElement) || 'No content found';
       }
     } catch (error) {
       logger.error('Error extracting article data:', { error, source: source.name });
@@ -91,13 +146,13 @@ export class ScraperService {
       const articles: Article[] = [];
 
       const articleElements = $(source.selectors.articles).toArray();
-      // Concurrency limit for article detail fetching
       const articleConcurrency = config.scraper?.articleConcurrency || 5;
       const articleLimit = pLimit(articleConcurrency);
       const articlePromises = articleElements.map(element =>
         articleLimit(() => this.extractArticleData(element, $, source))
       );
       const extractedArticles = await Promise.all(articlePromises);
+      
       for (const article of extractedArticles) {
         if (article.title !== 'No title found' && article.link !== 'No link found') {
           articles.push(article);
@@ -126,7 +181,6 @@ export class ScraperService {
   }
 
   async scrapeMultipleSources(sources: NewsSource[]): Promise<ScrapingResult[]> {
-    // Concurrency limit for source scraping
     const sourceConcurrency = config.scraper?.sourceConcurrency || 5;
     const sourceLimit = pLimit(sourceConcurrency);
     const scrapePromises = sources.map(source => sourceLimit(() => this.scrapeSource(source)));
@@ -142,7 +196,6 @@ export class ScraperService {
           create: { ...article },
         });
       } catch (err) {
-        // Ignore duplicate errors, log others
         if (!String(err).includes('Unique constraint')) {
           logger.error('Error saving article to DB:', { err, article });
         }
@@ -151,8 +204,49 @@ export class ScraperService {
   }
 }
 
-// Utility to run a full scrape and save all articles to DB
-import { newsSources } from '../config/news-sources';
+export function formatArticleForTelegram(article: any): string {
+  const maxLength = 4096;
+  const title = article.title || 'No Title';
+  const content = article.content || article.description || 'No content available';
+  const source = article.source || 'Unknown Source';
+  const publishedAt = article.publishedAt ? 
+    new Date(article.publishedAt).toLocaleDateString() : 'Unknown Date';
+
+  let cleanContent = content
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .trim();
+
+  const header = `<b>${escapeHtml(title)}</b>\n\n`;
+  const footer = `\n\n📅 <b>Published:</b> ${publishedAt}\n📰 <b>Source:</b> ${escapeHtml(source)}`;
+  
+  const availableLength = maxLength - header.length - footer.length - 100;
+  
+  if (cleanContent.length > availableLength) {
+    const truncated = cleanContent.substring(0, availableLength);
+    const lastParagraphEnd = truncated.lastIndexOf('\n\n');
+    
+    if (lastParagraphEnd > availableLength * 0.7) {
+      cleanContent = truncated.substring(0, lastParagraphEnd) + '\n\n...';
+    } else {
+      cleanContent = truncated + '...';
+    }
+  }
+
+  return header + escapeHtml(cleanContent) + footer;
+}
+
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
 export async function scrapeAndSaveAllNews() {
   const scraper = new ScraperService();
   const sources = Object.values(newsSources);
