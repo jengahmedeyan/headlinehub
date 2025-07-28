@@ -2,7 +2,7 @@
   "name": "headlinehub",
   "version": "1.0.0",
   "description": "A modern news aggregation and scraping service.",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
     "build": "tsc",
     "start": "node dist/app.js",

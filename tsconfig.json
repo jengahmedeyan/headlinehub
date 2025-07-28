@@ -14,19 +14,7 @@
     "declarationMap": true,
     "sourceMap": true,
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    "baseUrl": "./src",
-    "paths": {
-      "@/*": ["*"],
-      "@/config/*": ["config/*"],
-      "@/controllers/*": ["controllers/*"],
-      "@/services/*": ["services/*"],
-      "@/models/*": ["models/*"],
-      "@/middleware/*": ["middleware/*"],
-      "@/utils/*": ["utils/*"],
-      "@/routes/*": ["routes/*"]
-    }
+    "emitDecoratorMetadata": true
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts"]
+  "include": ["src"]
 }
