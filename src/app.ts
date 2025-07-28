@@ -9,7 +9,7 @@ import { newsSources } from './config/news-sources';
 import { config } from './config';
 import cron from 'node-cron';
 import { scrapeAndSaveAllNews } from './services/scraper.service';
-import './utils/telegram';
+import headlineHubBot from './bot';
 
 const app = express();
 
@@ -29,6 +29,7 @@ app.get('/health', (req, res) => {
   });
 });
 
+
 app.use('/api/news', newsRoutes);
 
 app.use(notFoundHandler);
@@ -41,7 +42,9 @@ const startServer = () => {
     logger.info(`🌍 Environment: ${config.nodeEnv}`);
   });
 
-  cron.schedule('0 * * * *', async () => {
+  headlineHubBot.start();
+
+  cron.schedule('0 6 * * *', async () => {
     logger.info('⏰ Starting scheduled news scraping...');
     await scrapeAndSaveAllNews();
     logger.info('✅ Scheduled news scraping complete.');
