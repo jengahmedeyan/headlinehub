@@ -22,7 +22,8 @@ export class HeadlineHubBot {
     this.bot.onText(/\/start/, this.handlers.handleStart.bind(this.handlers));
     this.bot.onText(/\/help/, this.handlers.handleHelp.bind(this.handlers));
     this.bot.onText(/\/latest/, this.handlers.handleLatest.bind(this.handlers));
-
+    this.bot.onText(/\/fetch/, this.handlers.handleFetch.bind(this.handlers));
+    
     this.bot.on("callback_query", this.handlers.handleCallback.bind(this.handlers));
 
     this.bot.on("polling_error", (error) => {
