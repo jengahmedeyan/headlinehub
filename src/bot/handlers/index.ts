@@ -3,18 +3,21 @@ import { StartHandler } from "./start.handler";
 import { HelpHandler } from "./help.handler";
 import { LatestHandler } from "./latest.handler";
 import { CallbackHandler } from "./callback.handler";
+import { FetchHandler } from "./fetch.handler";
 
 export class BotHandlers {
   private startHandler: StartHandler;
   private helpHandler: HelpHandler;
   private latestHandler: LatestHandler;
   private callbackHandler: CallbackHandler;
+  private fetchHandler: FetchHandler;
 
   constructor(private bot: TelegramBot) {
     this.startHandler = new StartHandler(bot);
     this.helpHandler = new HelpHandler(bot);
     this.latestHandler = new LatestHandler(bot);
     this.callbackHandler = new CallbackHandler(bot);
+    this.fetchHandler = new FetchHandler(bot);
   }
 
   public async handleStart(msg: TelegramBot.Message): Promise<void> {
@@ -31,5 +34,9 @@ export class BotHandlers {
 
   public async handleCallback(callbackQuery: TelegramBot.CallbackQuery): Promise<void> {
     await this.callbackHandler.handle(callbackQuery);
+  }
+
+  public async handleFetch(msg: TelegramBot.Message): Promise<void> {
+    await this.fetchHandler.handle(msg);
   }
 }
