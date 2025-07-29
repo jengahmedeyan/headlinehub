@@ -5,6 +5,7 @@
   "main": "app.js",
   "scripts": {
     "build": "tsc",
+    "postbuild": "copyfiles -u 2 \"src/generated/prisma/**/*\" dist/generated/",
     "start": "node dist/app.js",
     "dev": "ts-node-dev --respawn --transpile-only src/app.ts",
     "clean": "rimraf dist",
@@ -56,6 +57,7 @@
     "@types/p-limit": "^2.1.0",
     "@typescript-eslint/eslint-plugin": "^8.38.0",
     "@typescript-eslint/parser": "^8.38.0",
+    "copyfiles": "^2.4.1",
     "eslint": "^9.31.0",
     "jest": "^30.0.5",
     "nodemon": "^3.1.10",
