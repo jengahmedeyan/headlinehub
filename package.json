@@ -5,10 +5,10 @@
   "main": "app.js",
   "scripts": {
     "build": "tsc",
-    "postbuild": "copyfiles -u 2 \"src/generated/prisma/**/*\" dist/generated/",
+    "postbuild": "mkdir -p dist/generated && cp -r src/generated/prisma dist/generated/ 2>/dev/null || true",
     "start": "node dist/app.js",
     "dev": "ts-node-dev --respawn --transpile-only src/app.ts",
-    "clean": "rimraf dist",
+    "clean": "rm -rf dist",
     "test": "jest",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
