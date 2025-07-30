@@ -65,8 +65,7 @@ export class AudioService {
   }
 
   private prepareAudioContent(article: any): string {
-    const title = article.title || "Untitled Article";
-    const content = article.content || article.description || "No content available";
+    const content = article.content || "No content available";
     
     const cleanContent = content
       .replace(/&[a-zA-Z0-9#]+;/g, " ")
@@ -74,7 +73,7 @@ export class AudioService {
       .replace(/\s+/g, " ")
       .trim();
 
-    return `${title}. ${cleanContent}`;
+    return `${cleanContent}`;
   }
 
   private truncate(text: string, maxLength: number): string {
