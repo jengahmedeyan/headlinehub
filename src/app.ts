@@ -8,7 +8,7 @@ import { createRateLimiter } from './middleware/rate-limit.middleware';
 import { newsSources } from './config/news-sources';
 import { config } from './config';
 import cron from 'node-cron';
-import { scrapeAndSaveAllNews } from './services/scraper.service';
+import { RssScraperService } from './services/rss-scraper.service';
 import headlineHubBot from './bot';
 
 const app = express();
@@ -44,10 +44,10 @@ const startServer = () => {
 
   headlineHubBot.start();
 
-  cron.schedule('0 6 * * *', async () => {
-    logger.info('⏰ Starting scheduled news scraping...');
-    await scrapeAndSaveAllNews();
-    logger.info('✅ Scheduled news scraping complete.');
+  cron.schedule("0 */5 * * *", async () => {
+    logger.info("⏰ Starting scheduled RSS news scraping...");
+    await RssScraperService.scrapeAndSaveAllRssNews();
+    logger.info("✅ Scheduled RSS news scraping complete.");
   });
 };
 
