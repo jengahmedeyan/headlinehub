@@ -33,15 +33,25 @@ export interface ScrapingResult {
   statusCode?: number;
 }
 
+export interface PaginationMeta {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  itemsPerPage: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
+
 export interface NewsResponse {
   success: boolean;
-  data: Article[];
+  data: any[];
   count: number;
   sources: string[];
   scrapedAt: Date;
+  duplicatesRemoved: number;
+  healthStatus?: any;
   error?: string;
-  duplicatesRemoved?: number;
-  healthStatus?: SourceHealthStatus[];
+  pagination?: PaginationMeta;
 }
 
 export interface SourceHealthStatus {
