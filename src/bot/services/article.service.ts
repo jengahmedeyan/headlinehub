@@ -37,7 +37,7 @@ export class ArticleService {
                 callback_data: `audio_${article.id}`,
               },
               {
-                text: "🔗 Read Full Article",
+                text: "🔗 Read Original",
                 url: article.link,
               },
             ],
