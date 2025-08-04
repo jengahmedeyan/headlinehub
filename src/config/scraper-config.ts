@@ -1,6 +1,6 @@
 export const SCRAPER_CONFIG = {
   DEFAULT_CONCURRENCY: 3,
-  DEFAULT_BATCH_SIZE: 10,
+  DEFAULT_BATCH_SIZE: 20,
   DEFAULT_RETRY_ATTEMPTS: 3,
   
   BATCH_DELAY_MS: 1000,
@@ -21,7 +21,7 @@ export const SCRAPER_CONFIG = {
     a: ['href', 'name', 'target', 'rel'],
     img: ['src', 'alt', 'width', 'height']
   },
-  
+
   UNWANTED_TEXT_PATTERNS: [
     /^comments?$/i,
     /^login$/i,
@@ -44,7 +44,48 @@ export const SCRAPER_CONFIG = {
     /^policy$/i,
     /^powered by/i,
     /^all rights reserved$/i,
+    /facebook notice for eu/i,
+    /you need to login to view and post fb comments/i,
+    /fb comments?/i,
+    /facebook comments?/i,
+    /login to view.*comments?/i,
+    /view and post.*comments?/i,
+    /like.*share.*comment/i,
+    /follow us on/i,
+    /join.*conversation/i,
+    /sign up.*newsletter/i,
     /^\s*$/,
     /^(\.|\,|\;|\:)+$/,
+  ] as RegExp[],
+
+  UNWANTED_HTML_PATTERNS: [
+    /fb-comments?/i,
+    /fb-background-color/i,
+    /facebook.*widget/i,
+    /social.*widget/i,
+    /share.*widget/i,
+    /comment.*widget/i,
+    /alert.*warning/i,
+    /notice.*eu/i,
+    /widget.*sidebar/i,
+    /advertisement/i,
+    /sponsor/i,
+  ] as RegExp[],
+
+  CONTENT_BLOCK_FILTERS: [
+    // Facebook notice blocks
+    /facebook notice for eu.*?you need to login to view and post fb comments/is,
+    /fb-comments.*?<\/div>/is,
+    /fb-background-color.*?<\/div>/is,
+    // General social media blocks
+    /<div[^>]*class="[^"]*social[^"]*"[^>]*>.*?<\/div>/is,
+    /<div[^>]*class="[^"]*comment[^"]*"[^>]*>.*?<\/div>/is,
+    /<div[^>]*class="[^"]*fb-[^"]*"[^>]*>.*?<\/div>/is,
+    // Alert/warning blocks
+    /<div[^>]*class="[^"]*alert[^"]*warning[^"]*"[^>]*>.*?<\/div>/is,
+    // Style blocks
+    /<style[^>]*>.*?<\/style>/is,
+    // Script blocks
+    /<script[^>]*>.*?<\/script>/is,
   ] as RegExp[]
 };
