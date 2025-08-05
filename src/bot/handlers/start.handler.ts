@@ -8,10 +8,14 @@ export class StartHandler {
 
     const welcomeMessage = `
 🎉 <b>Welcome to HeadlineHub Bot!</b>
+🤖 I am here to help you stay updated with the latest news articles from various sources in The Gambia.
+Here are some commands you can use:
+🚀 <b>/start</b> - Initialize the bot and get a welcome message
+❓ <b>/help</b> - Display this help message
+📰 <b>/latest</b> - Browse the latest news articles
+📖 <b>/sources</b> - List all available news sources
+🔍 <b>/source [source name]</b> - Get articles from a specific source
 
-Your personal news companion is ready to serve you the latest headlines.
-
-Use /help to explore all available commands and start your news journey!
     `.trim();
 
     await this.bot.sendMessage(chatId, welcomeMessage, {
