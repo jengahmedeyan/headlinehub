@@ -56,4 +56,44 @@ export class ArticleService {
       await this.bot.sendMessage(chatId, "❌ Error loading article content.");
     }
   }
+
+  public async getArticlesBySource(chatId: number, source: string): Promise<void>{
+    try {
+      const res = await this.newsService.getNewsBySource(source);
+
+      if (!res.success || res.data.length === 0) {
+        await this.bot.sendMessage(chatId, `❌ No articles found for source: ${source}`);
+        return;
+      }
+
+      const articles = res.data.slice(0, 10);
+      const keyboard = {
+        inline_keyboard: articles.map((article) => [
+          {
+            text: `📰 ${this.articleFormatter.truncateTitle(article.title)}`,
+            callback_data: `article_${article.id}`,
+          },
+        ]),
+      };
+
+      await this.bot.sendMessage(
+        chatId,
+        `📰 <b>Articles from ${source}</b>\n\nSelect an article to read:`,
+        {
+          parse_mode: "HTML",
+          reply_markup: keyboard,
+        }
+      );
+    } catch (error) {
+      console.error("Error fetching articles by source:", error);
+      logger.error("Error fetching articles by source:", error);
+      await this.bot.sendMessage(chatId, "❌ Error fetching articles. Please try again later.");
+    }
+  }
+
+  public async handleSourceSelection(chatId: number, data: string): Promise<void> {
+  const sourceId = data.replace("source_", "");
+  await this.getArticlesBySource(chatId, sourceId);
+}
+
 }

@@ -30,10 +30,12 @@ export class CallbackHandler {
       console.warn("Callback query already expired:", error.message);
     }
 
-    if (data.startsWith("article_")) {
+   if (data.startsWith("article_")) {
       await this.articleService.handleArticleSelection(chatId, data);
     } else if (data.startsWith("audio_")) {
       await this.audioService.handleAudioGeneration(chatId, data);
+    } else if (data.startsWith("source_")) {
+      await this.articleService.handleSourceSelection(chatId, data);
     } else if (data === "back_to_list") {
       await this.articleListService.sendLatestArticlesList(chatId);
     }
