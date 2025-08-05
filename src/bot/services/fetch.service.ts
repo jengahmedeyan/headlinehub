@@ -1,8 +1,8 @@
 import TelegramBot from "node-telegram-bot-api";
 import {
-  scrapeAndSaveAllNews,
   ScraperService,
 } from "../../services/scraper.service";
+import { RssScraperService } from "../../services/rss-scraper.service";
 
 export class fetchService {
   private scraperService: ScraperService;
@@ -13,7 +13,7 @@ export class fetchService {
 
   public async fetchArticles(chatId: number): Promise<void> {
     try {
-      await scrapeAndSaveAllNews();
+      await RssScraperService.scrapeAndSaveAllRssNews();
       await this.bot.sendMessage(chatId, "📰 Articles fetched successfully!");
     } catch (error) {
       await this.bot.sendMessage(chatId, "failed to fetch articles");

@@ -10,68 +10,89 @@ export class ArticleFormatter {
   public formatForTelegram(article: any): string {
     const maxLength = 4096;
     const title = article.title || "No Title";
-    const content = article.content || article.description || "No content available";
+    let content = article.content || article.description || "No content available";
     const source = article.source || "Unknown Source";
     const publishedAt = article.date
       ? this.formatDate(article.date)
       : "Unknown Date";
 
-    let cleanContent = this.cleanHtmlEntities(content);
-
+    content = this.htmlEscaper.convertToTelegram(content);
+    
     const header = `<b>${this.htmlEscaper.escape(title)}</b>\n\n`;
+    
     const footer = `\n\n📅 <b>Published:</b> ${publishedAt}\n📰 <b>Source:</b> ${this.htmlEscaper.escape(source)}`;
-
+    
     const availableLength = maxLength - header.length - footer.length - 100;
-
-    if (cleanContent.length > availableLength) {
-      cleanContent = this.truncateContent(cleanContent, availableLength);
+    
+    if (content.length > availableLength) {
+      content = this.truncateContent(content, availableLength);
     }
 
-    return header + this.htmlEscaper.escape(cleanContent) + footer;
-  }
+    const finalText = header + content + footer;
+    
+    if (!this.htmlEscaper.validateTelegramLength(finalText, maxLength)) {
+      console.warn('Formatted text exceeds Telegram limit, further truncation may be needed');
+    }
 
-  private cleanHtmlEntities(content: string): string {
-    return content
-      .replace(/&amp;/g, "&")
-      .replace(/&lt;/g, "<")
-      .replace(/&gt;/g, ">")
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'")
-      .replace(/&nbsp;/g, " ")
-      .trim();
+    return finalText;
   }
 
   private truncateContent(content: string, maxLength: number): string {
-    const truncated = content.substring(0, maxLength);
-    const lastParagraphEnd = truncated.lastIndexOf("\n\n");
+    if (content.length <= maxLength) {
+      return content;
+    }
 
+    const truncated = content.substring(0, maxLength);
+    
+    const lastParagraphEnd = truncated.lastIndexOf('\n\n');
     if (lastParagraphEnd > maxLength * 0.7) {
-      return truncated.substring(0, lastParagraphEnd) + "\n\n...";
+      return this.htmlEscaper.cleanWhitespace(
+        truncated.substring(0, lastParagraphEnd) + '\n\nRead more... from the source.'
+      );
     }
     
-    const lastSentenceEnd = Math.max(
-      truncated.lastIndexOf(". "),
-      truncated.lastIndexOf("! "),
-      truncated.lastIndexOf("? ")
-    );
-
-    if (lastSentenceEnd > maxLength * 0.8) {
-      return truncated.substring(0, lastSentenceEnd + 1) + " ...";
+    const sentenceEnders = ['. ', '! ', '? ', '.\n', '!\n', '?\n'];
+    let lastSentenceEnd = -1;
+    
+    for (const ender of sentenceEnders) {
+      const index = truncated.lastIndexOf(ender);
+      if (index > lastSentenceEnd) {
+        lastSentenceEnd = index;
+      }
     }
-
-    return truncated + "...";
+    
+    if (lastSentenceEnd > maxLength * 0.8) {
+      const endChar = truncated.charAt(lastSentenceEnd);
+      const offset = endChar === '.' || endChar === '!' || endChar === '?' ? 1 : 2;
+      return this.htmlEscaper.cleanWhitespace(
+        truncated.substring(0, lastSentenceEnd + offset) + ' ...'
+      );
+    }
+    
+    const lastSpaceIndex = truncated.lastIndexOf(' ');
+    if (lastSpaceIndex > maxLength * 0.9) {
+      return this.htmlEscaper.cleanWhitespace(
+        truncated.substring(0, lastSpaceIndex) + '...'
+      );
+    }
+    
+    return this.htmlEscaper.cleanWhitespace(truncated + '...');
   }
 
   private formatDate(dateString: string): string {
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric"
+      if (isNaN(date.getTime())) {
+        return 'Unknown Date';
+      }
+      
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
       });
     } catch {
-      return "Unknown Date";
+      return 'Unknown Date';
     }
   }
 }
