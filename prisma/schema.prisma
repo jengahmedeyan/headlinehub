@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../src/generated/prisma"
@@ -15,13 +9,32 @@ datasource db {
 }
 
 model Article {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   title     String
   content   String
-  link      String   @unique
+  link      String    @unique
   date      String
   category  String
   source    String
   scrapedAt DateTime
-  hash      String?  @unique
+  hash      String?   @unique
+  summaries Summary[]
+
+  @@index([scrapedAt])
+  @@index([date])
+  @@index([source])
+}
+
+model Summary {
+  id        String   @id @default(cuid())
+  articleId String   @map("article_id")
+  summary   String
+  title     String?
+  version   Int      @default(1)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@unique([articleId, version])
+  @@map("summaries")
 }
