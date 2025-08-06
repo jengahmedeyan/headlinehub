@@ -10,11 +10,6 @@ export const rssNewsSources = [
     url: 'https://www.kerrfatou.com/feed'
   },
   {
-    id:'ThePoint',
-    name: 'The Point',
-    url: 'https://thepoint.gm/feed'
-  },
-  {
     id:'Foroyaa',
     name: 'Foroyaa',
     url: 'https://foroyaa.net/feed'
