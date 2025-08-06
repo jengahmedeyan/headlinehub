@@ -10,6 +10,7 @@ import { config } from "./config";
 import cron from "node-cron";
 import { RssScraperService } from "./services/rss-scraper.service";
 import headlineHubBot from "./bot";
+import { summaryRoutes } from "./routes/summary.route";
 
 const app = express();
 
@@ -80,6 +81,7 @@ app.get("/api/health/scraping", async (req, res) => {
 });
 
 app.use("/api/news", newsRoutes);
+app.use('/api/summaries', summaryRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
