@@ -1,3 +1,5 @@
+import { Summary } from "./summary.model";
+
 export interface Article {
   id?: string;
   title: string;
@@ -8,6 +10,7 @@ export interface Article {
   source: string;
   scrapedAt: Date;
   hash?: string;
+  Summarys?: Summary[];
 }
 
 export interface NewsSource {
@@ -31,6 +34,14 @@ export interface ScrapingResult {
   error?: string;
   responseTime?: number;
   statusCode?: number;
+}
+
+export interface ScrapingSummaryResult {
+  success: number;
+  failed: number;
+  skipped: number;
+  articles: any[];
+  errors: Array<{ source: string; error: string }>;
 }
 
 export interface PaginationMeta {
@@ -69,4 +80,34 @@ export interface DeduplicationStats {
   duplicatesFound: number;
   duplicatesRemoved: number;
   uniqueArticles: number;
+}
+
+
+export interface RssSource {
+  name: string;
+  url: string;
+  category?: string;
+  rateLimit?: number;
+}
+
+export interface RssItem {
+  title?: string;
+  link?: string;
+  pubDate?: string;
+  "content:encoded"?: string;
+  content?: string;
+  contentSnippet?: string;
+  categories?: string[];
+  description?: string;
+  summary?: string;
+}
+
+export interface ArticleData {
+  title: string;
+  link: string;
+  source: string;
+  date: string;
+  content: string;
+  category: string;
+  scrapedAt: string;
 }
