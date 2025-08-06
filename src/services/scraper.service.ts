@@ -4,12 +4,11 @@ import { Article, NewsSource, ScrapingResult } from '../models/article.model';
 import { config } from '../config';
 import { logger } from '../utils/logger';
 import { delay } from '../utils/delay';
-import { newsSources } from '../config/news-sources';
 import pLimit from 'p-limit';
 import prisma from '../utils/prisma';
 
 export class ScraperService {
-  private async fetchPage(url: string): Promise<AxiosResponse<string>> {
+  private fetchPage = async (url: string): Promise<AxiosResponse<string>> => {
     await delay(config.scraper.delayMs);
     
     return await axios.get(url, {
@@ -20,7 +19,7 @@ export class ScraperService {
     });
   }
 
-  private async extractContentFromDetailPage(link: string, source: NewsSource): Promise<string> {
+  private extractContentFromDetailPage=async(link: string, source: NewsSource): Promise<string> =>{
     try {
       const response = await this.fetchPage(link);
       const $ = cheerio.load(response.data);
@@ -38,7 +37,7 @@ export class ScraperService {
     }
   }
 
-private extractFormattedText($element: cheerio.Cheerio<any>): string {
+private extractFormattedText=($element: cheerio.Cheerio<any>): string =>{
   const $cloned = $element.clone();
   
   $cloned.find('p').each((_, el) => {
@@ -91,11 +90,11 @@ private extractFormattedText($element: cheerio.Cheerio<any>): string {
   return text;
 }
 
-  private async extractArticleData(
+  private extractArticleData = async(
     element: any,
     $: cheerio.CheerioAPI,
     source: NewsSource
-  ): Promise<Article> {
+  ): Promise<Article> =>{
     const article: Article = {
       title: '',
       content: '',
@@ -137,7 +136,7 @@ private extractFormattedText($element: cheerio.Cheerio<any>): string {
     return article;
   }
 
-  async scrapeSource(source: NewsSource): Promise<ScrapingResult> {
+  scrapeSource = async(source: NewsSource): Promise<ScrapingResult> =>{
     try {
       logger.info(`Starting to scrape: ${source.name}`);
 
@@ -180,14 +179,14 @@ private extractFormattedText($element: cheerio.Cheerio<any>): string {
     }
   }
 
-  async scrapeMultipleSources(sources: NewsSource[]): Promise<ScrapingResult[]> {
+  scrapeMultipleSources = async(sources: NewsSource[]): Promise<ScrapingResult[]> => {
     const sourceConcurrency = config.scraper?.sourceConcurrency || 5;
     const sourceLimit = pLimit(sourceConcurrency);
     const scrapePromises = sources.map(source => sourceLimit(() => this.scrapeSource(source)));
     return Promise.all(scrapePromises);
   }
 
-  async saveArticlesToDb(articles: Article[]): Promise<void> {
+  saveArticlesToDb = async(articles: Article[]): Promise<void> =>{
     for (const article of articles) {
       try {
         await prisma.article.upsert({
@@ -202,56 +201,4 @@ private extractFormattedText($element: cheerio.Cheerio<any>): string {
       }
     }
   }
-}
-
-export function formatArticleForTelegram(article: any): string {
-  const maxLength = 4096;
-  const title = article.title || 'No Title';
-  const content = article.content || article.description || 'No content available';
-  const source = article.source || 'Unknown Source';
-  const publishedAt = article.publishedAt ? 
-    new Date(article.publishedAt).toLocaleDateString() : 'Unknown Date';
-
-  let cleanContent = content
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&nbsp;/g, ' ')
-    .trim();
-
-  const header = `<b>${escapeHtml(title)}</b>\n\n`;
-  const footer = `\n\n📅 <b>Published:</b> ${publishedAt}\n📰 <b>Source:</b> ${escapeHtml(source)}`;
-  
-  const availableLength = maxLength - header.length - footer.length - 100;
-  
-  if (cleanContent.length > availableLength) {
-    const truncated = cleanContent.substring(0, availableLength);
-    const lastParagraphEnd = truncated.lastIndexOf('\n\n');
-    
-    if (lastParagraphEnd > availableLength * 0.7) {
-      cleanContent = truncated.substring(0, lastParagraphEnd) + '\n\n...';
-    } else {
-      cleanContent = truncated + '...';
-    }
-  }
-
-  return header + escapeHtml(cleanContent) + footer;
-}
-
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-}
-
-export async function scrapeAndSaveAllNews() {
-  const scraper = new ScraperService();
-  const sources = Object.values(newsSources);
-  const results = await scraper.scrapeMultipleSources(sources);
-  const allArticles = results.flatMap(r => r.articles);
-  await scraper.saveArticlesToDb(allArticles);
-  logger.info(`Saved ${allArticles.length} articles to DB.`);
 }

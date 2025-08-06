@@ -5,7 +5,7 @@ import { logger } from "../utils/logger";
 
 export class ElevenLabsService {
   private apiKey: string;
-  private baseUrl = "https://api.elevenlabs.io/v1";
+  private baseUrl = process.env.ELEVENLABS_BASE_URL;
   private voiceId: string;
 
   constructor(apiKey: string, voiceId = "EXAVITQu4vr4xnSDxMaL") {
@@ -13,7 +13,7 @@ export class ElevenLabsService {
     this.voiceId = voiceId;
   }
 
-  async textToSpeech(text: string, voiceId?: string): Promise<Buffer> {
+  textToSpeech = async(text: string, voiceId?: string): Promise<Buffer> =>{
     try {
       const voice = voiceId || this.voiceId;
 
@@ -48,7 +48,7 @@ export class ElevenLabsService {
     }
   }
 
-  private prepareTextForTTS(text: string): string {
+  private prepareTextForTTS = (text: string): string =>{
     let cleanText = text
       .replace(/\n\n+/g, ". ")
       .replace(/\n/g, " ")
@@ -71,7 +71,7 @@ export class ElevenLabsService {
     return cleanText;
   }
 
-  async getVoices(): Promise<any[]> {
+  getVoices = async(): Promise<any[]> =>{
     try {
       const response = await axios.get(`${this.baseUrl}/voices`, {
         headers: {
@@ -85,10 +85,10 @@ export class ElevenLabsService {
     }
   }
 
-  async saveAudioToFile(
+  saveAudioToFile = async(
     audioBuffer: Buffer,
     filename: string
-  ): Promise<string> {
+  ): Promise<string> =>{
     const audioDir = path.join(process.cwd(), "audio");
 
     if (!fs.existsSync(audioDir)) {

@@ -12,11 +12,11 @@ export class NewsService {
     this.scraperService = new ScraperService();
   }
 
-  async getAllNews(
+  getAllNews = async(
     dateParam?: string,
     page: number = 1,
     limit: number = 20
-  ): Promise<NewsResponse> {
+  ): Promise<NewsResponse> =>{
     try {
       const ARTICLE_DATE_FORMAT = "MMMM d, yyyy";
       let targetDateString: string | undefined = undefined;
@@ -99,7 +99,7 @@ export class NewsService {
     }
   }
 
-  async getArticleById(id: string): Promise<NewsResponse> {
+  getArticleById = async(id: string): Promise<NewsResponse> =>{
     try {
       const article = await prisma.article.findUnique({
         where: { id },
@@ -144,15 +144,14 @@ export class NewsService {
     }
   }
 
-  async getLatestArticles(): Promise<NewsResponse> {
+  getLatestArticles = async(): Promise<NewsResponse> =>{
     try {
       const articlesFromDb = await prisma.article.findMany({
         orderBy: { scrapedAt: "desc" },
         take: 10,
       });
       const articles = articlesFromDb.map((a) => ({
-        ...a,
-        hash: a.hash ?? undefined,
+        ...a
       }));
 
       return {
@@ -181,7 +180,7 @@ export class NewsService {
     }
   }
 
-  async getNewsBySource(sourceName: string): Promise<NewsResponse> {
+  getNewsBySource = async(sourceName: string): Promise<NewsResponse> =>{
     try {
       const articlesFromDb = await prisma.article.findMany({
         where: { source: sourceName },
@@ -223,7 +222,7 @@ export class NewsService {
     }
   }
 
-  async searchNews(query: string): Promise<NewsResponse> {
+  searchNews = async(query: string): Promise<NewsResponse> =>{
     try {
       const articlesFromDb = await prisma.article.findMany({
         where: {
@@ -264,11 +263,11 @@ export class NewsService {
     }
   }
 
-  async getStats(): Promise<{
+  getStats = async(): Promise<{
     articles: number;
     sources: number;
     lastScrape: Date | null;
-  }> {
+  }> =>{
     try {
       const articlesCount = await prisma.article.count();
       const sources = await prisma.article.findMany({
@@ -289,7 +288,7 @@ export class NewsService {
     }
   }
 
-  async getHealthStatus(): Promise<{ success: boolean; data: any }> {
+  getHealthStatus = async(): Promise<{ success: boolean; data: any }> =>{
     try {
       const allStatuses = HealthMonitoringService.getHealthStatus() as any;
       const overallHealth = HealthMonitoringService.getOverallHealth();
@@ -313,7 +312,7 @@ export class NewsService {
       };
     }
   }
-  async getAvailableCategories(): Promise<string[]> {
+  getAvailableCategories = async(): Promise<string[]> =>{
     try {
       const categories = await prisma.article.findMany({
         select: { category: true },
