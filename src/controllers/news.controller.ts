@@ -8,7 +8,7 @@ export class NewsController {
   constructor() {
     this.newsService = new NewsService();
   }
-
+  // GET /api/news
   getAllNews = async (req: Request, res: Response): Promise<void> => {
     try {
       const { date, page, limit } = req.query;
@@ -70,6 +70,7 @@ export class NewsController {
     }
   };
 
+  // GET /api/news/:id
   getArticleById = async (req: Request, res: Response): Promise<void> => {
     const { id } = req.params;
 
@@ -96,6 +97,7 @@ export class NewsController {
     }
   };
 
+  // GET /api/news/latest
   getLatestNewsArticles = async (
     req: Request,
     res: Response
@@ -109,6 +111,7 @@ export class NewsController {
     }
   };
 
+  // GET /api/news/source/:source
   getNewsBySource = async (req: Request, res: Response): Promise<void> => {
     try {
       const { source } = req.params;
@@ -134,6 +137,7 @@ export class NewsController {
     }
   };
 
+  // GET /api/news/sources
   getAvailableSources = async (req: Request, res: Response): Promise<void> => {
     try {
       const { rssNewsSources } = await import("../config/rss-news-sources");
@@ -157,6 +161,7 @@ export class NewsController {
     }
   };
 
+  // GET /api/news/search?query=keyword
   searchNews = async (req: Request, res: Response): Promise<void> => {
     try {
       const { query } = req.query;
@@ -168,6 +173,7 @@ export class NewsController {
     }
   };
 
+  // GET /api/news/categories
   getAvailableCategories = async (
     req: Request,
     res: Response
@@ -181,6 +187,7 @@ export class NewsController {
     }
   };
 
+  // GET /api/news/stats
   getStats = async (req: Request, res: Response): Promise<void> => {
     try {
       const stats = await this.newsService.getStats();
@@ -191,6 +198,7 @@ export class NewsController {
     }
   };
 
+  // GET /api/news/health
   getHealthStatus = async (req: Request, res: Response): Promise<void> => {
     try {
       const result = await this.newsService.getHealthStatus();
