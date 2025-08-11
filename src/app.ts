@@ -11,6 +11,7 @@ import cron from "node-cron";
 import { RssScraperService } from "./services/rss-scraper.service";
 import headlineHubBot from "./bot";
 import { summaryRoutes } from "./routes/summary.route";
+import { healthRoutes } from "./routes/health.routes";
 
 const app = express();
 
@@ -22,66 +23,9 @@ app.use(createRateLimiter());
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-app.get("/health", (req, res) => {
-  res.json({
-    status: "healthy",
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-  });
-});
-
-app.get("/test-scrape", async (req, res) => {
-  try {
-    const sourceKey = req.query.source as string;
-    let sourcesToScrape;
-    if (sourceKey) {
-      const { rssNewsSources } = await import("./config/rss-news-sources");
-      const source = rssNewsSources.find((s: any) => s.name === sourceKey);
-      if (!source) {
-        return res
-          .status(400)
-          .json({ success: false, error: `Unknown RSS source: ${sourceKey}` });
-      }
-      sourcesToScrape = [source];
-    } else {
-      const { rssNewsSources } = await import("./config/rss-news-sources");
-      sourcesToScrape = rssNewsSources;
-    }
-    const result = await RssScraperService.scrapeAndSaveAllRssNews({
-      batchSize: sourcesToScrape.length,
-       dryRun: true
-    });
-    res.json(result);
-  } catch (error) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
-  }
-});
-
-app.get("/api/health/scraping", async (req, res) => {
-  try {
-    const [hourly, daily] = await Promise.all([
-      RssScraperService.getScrapingStats(1),
-      RssScraperService.getScrapingStats(24),
-    ]);
-
-    res.json({
-      status: hourly.totalArticles > 0 ? "healthy" : "warning",
-      hourly,
-      daily,
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error: any) {
-    res.status(500).json({ status : "error", error: error.message });
-  }
-});
-
 app.use("/api/news", newsRoutes);
 app.use('/api/summaries', summaryRoutes);
+app.use('/api/health', healthRoutes)
 
 app.use(notFoundHandler);
 app.use(errorHandler);
