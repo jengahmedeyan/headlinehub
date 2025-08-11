@@ -23,5 +23,10 @@ export const rssNewsSources = [
     id:'VoiceGambia',
     name: 'Voice Gambia',
     url: 'https://www.voicegambia.com/feed'
+  },
+  {
+    id:'ThePointGM',
+    name: 'The Point GM',
+    url:'https://thepoint.gm/posts/rss/xml'
   }
 ];
