@@ -15,7 +15,7 @@ export class RssScraperService {
     { lastRequest: number; requestCount: number }
   >();
 
-  static scrapeAndSaveAllRssNews = async(
+  static scrapeAndSaveAllRssNews = async (
     options: {
       concurrency?: number;
       retryAttempts?: number;
@@ -80,9 +80,9 @@ export class RssScraperService {
     });
 
     return result;
-  }
+  };
 
-  private static processSingleSource = async(
+  private static processSingleSource = async (
     source: RssSource,
     options: { retryAttempts: number; skipRecent: boolean; dryRun: boolean }
   ): Promise<any[]> => {
@@ -150,12 +150,12 @@ export class RssScraperService {
     }
 
     throw lastError || new Error(`Failed after ${retryAttempts} attempts`);
-  }
+  };
 
-  static saveArticle = async(
+  static saveArticle = async (
     item: RssItem,
     source: RssSource
-  ): Promise<any | null> =>{
+  ): Promise<any | null> => {
     try {
       if (!item.link || !item.title) {
         logger.warn("Skipping article with missing required fields", {
@@ -225,11 +225,11 @@ export class RssScraperService {
       });
       return null;
     }
-  }
+  };
 
   private static extractContent = (item: RssItem): string => {
     return item["content:encoded"] || item.content || item.description || "";
-  }
+  };
 
   private static sanitizeContent(rawContent: string): string {
     if (!rawContent) return "";
@@ -301,7 +301,7 @@ export class RssScraperService {
     return sanitized.trim();
   }
 
-  private static isUnwantedContent =(content: string): boolean =>{
+  private static isUnwantedContent = (content: string): boolean => {
     const cleanText = content
       .replace(/<[^>]*>/g, "")
       .toLowerCase()
@@ -328,9 +328,9 @@ export class RssScraperService {
     }
 
     return false;
-  }
+  };
 
-  private static parseDate = (pubDate?: string): string =>{
+  private static parseDate = (pubDate?: string): string => {
     if (!pubDate) return new Date().toISOString();
 
     try {
@@ -355,9 +355,12 @@ export class RssScraperService {
       logger.warn(`Invalid publication date: ${pubDate}, using current date`);
       return new Date().toISOString();
     }
-  }
+  };
 
-  private static determineCategory = (item: RssItem, source: RssSource): string => {
+  private static determineCategory = (
+    item: RssItem,
+    source: RssSource
+  ): string => {
     if (source.category) return source.category;
 
     if (item.categories && item.categories.length > 0) {
@@ -365,15 +368,15 @@ export class RssScraperService {
     }
 
     return "General";
-  }
+  };
 
-  private static generateContentHash = (article: ArticleData): string =>{
+  private static generateContentHash = (article: ArticleData): string => {
     const crypto = require("crypto");
     const content = `${article.title}|${article.content}`.toLowerCase();
     return crypto.createHash("md5").update(content).digest("hex");
-  }
+  };
 
-  private static applyRateLimit = async(source: RssSource): Promise<void> =>{
+  private static applyRateLimit = async (source: RssSource): Promise<void> => {
     const rateLimit = source.rateLimit || SCRAPER_CONFIG.DEFAULT_RATE_LIMIT;
     const now = Date.now();
     const key = source.url;
@@ -399,9 +402,11 @@ export class RssScraperService {
     rateLimitData.lastRequest = now;
     rateLimitData.requestCount++;
     this.rateLimitMap.set(key, rateLimitData);
-  }
+  };
 
-  private static wasRecentlyScraped = async(source: RssSource): Promise<boolean> => {
+  private static wasRecentlyScraped = async (
+    source: RssSource
+  ): Promise<boolean> => {
     try {
       const recentThreshold = new Date(
         Date.now() - SCRAPER_CONFIG.RECENT_SCRAPE_THRESHOLD_MS
@@ -425,44 +430,13 @@ export class RssScraperService {
       });
       return false;
     }
-  }
+  };
 
-  static getScrapingStats = async(hours: number = 24): Promise<any> =>{
-    try {
-      const since = new Date(Date.now() - hours * 60 * 60 * 1000);
 
-      const stats = await prisma.article.groupBy({
-        by: ["source"],
-        where: {
-          scrapedAt: {
-            gte: since.toISOString(),
-          },
-        },
-        _count: {
-          id: true,
-        },
-        orderBy: {
-          _count: {
-            id: "desc",
-          },
-        },
-      });
-
-      return {
-        period: `${hours} hours`,
-        totalArticles: stats.reduce((sum, stat) => sum + stat._count.id, 0),
-        sourceBreakdown: stats,
-      };
-    } catch (error) {
-      logger.error("Error getting scraping stats", { error });
-      throw error;
-    }
-  }
-
-  static processArticleWithoutSaving = async(
+  static processArticleWithoutSaving = async (
     item: RssItem,
     source: RssSource
-  ): Promise<any | null> =>{
+  ): Promise<any | null> => {
     try {
       if (!item.link || !item.title) {
         logger.warn("Skipping article with missing required fields", {
