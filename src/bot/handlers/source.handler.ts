@@ -28,7 +28,7 @@ export class SourceHandler {
 
     const matchedSource = this.findSourceByName(text);
     if (matchedSource) {
-      await this.articleService.getArticlesBySource(chatId, matchedSource.id);
+      await this.articleService.getArticlesBySource(chatId, matchedSource.name);
       return;
     }
   }
@@ -38,7 +38,7 @@ export class SourceHandler {
       inline_keyboard: rssNewsSources.map((source) => [
         {
           text: `📰 ${source.name}`,
-          callback_data: `source_${source.id}`,
+          callback_data: `source_${source.name}`,
         },
       ]),
     };
@@ -64,7 +64,7 @@ export class SourceHandler {
       return;
     }
 
-    await this.articleService.getArticlesBySource(chatId, source.id);
+    await this.articleService.getArticlesBySource(chatId, source.name);
   }
 
   private findSourceByName(name: string): typeof rssNewsSources[0] | null {
