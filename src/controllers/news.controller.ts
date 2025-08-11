@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { NewsService } from "../services/news.service";
 import { logger } from "../utils/logger";
+import { RssScraperService } from "../services/rss-scraper.service";
 
 export class NewsController {
   private newsService: NewsService;
@@ -215,6 +216,39 @@ export class NewsController {
         error: "Internal server error",
         message: error instanceof Error ? error.message : "Unknown error",
       });
+    }
+  };
+
+  // GET api/news/test-scrape
+  dummyScraper = async( req:Request, res:Response) => {
+    try {
+      const sourceKey = req.query.source as string;
+      let sourcesToScrape;
+      if (sourceKey) {
+        const { rssNewsSources } = await import("../config/rss-news-sources");
+        const source = rssNewsSources.find((s: any) => s.name === sourceKey);
+        if (!source) {
+          return res
+            .status(400)
+            .json({ success: false, error: `Unknown RSS source: ${sourceKey}` });
+        }
+        sourcesToScrape = [source];
+      } else {
+        const { rssNewsSources } = await import("../config/rss-news-sources");
+        sourcesToScrape = rssNewsSources;
+      }
+      const result = await RssScraperService.scrapeAndSaveAllRssNews({
+        batchSize: sourcesToScrape.length,
+         dryRun: true
+      });
+      res.json(result);
+    } catch (error) {
+      res
+        .status(500)
+        .json({
+          success: false,
+          error: error instanceof Error ? error.message : "Unknown error",
+        });
     }
   };
 }
