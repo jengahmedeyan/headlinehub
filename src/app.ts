@@ -41,7 +41,7 @@ const startServer = () => {
 
   headlineHubBot.start();
 
-  cron.schedule("0 */5 * * *", async () => {
+  cron.schedule("0 * * * *", async () => {
     logger.info("⏰ Starting scheduled RSS news scraping...");
     await RssScraperService.scrapeAndSaveAllRssNews();
     logger.info("✅ Scheduled RSS news scraping complete.");
