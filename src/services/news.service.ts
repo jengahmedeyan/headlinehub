@@ -12,11 +12,11 @@ export class NewsService {
     this.scraperService = new ScraperService();
   }
 
-  getAllNews = async(
+  getAllNews = async (
     dateParam?: string,
     page: number = 1,
     limit: number = 20
-  ): Promise<NewsResponse> =>{
+  ): Promise<NewsResponse> => {
     try {
       const ARTICLE_DATE_FORMAT = "MMMM d, yyyy";
       let targetDateString: string | undefined = undefined;
@@ -97,9 +97,9 @@ export class NewsService {
         healthStatus: HealthMonitoringService.getHealthStatus() as any,
       };
     }
-  }
+  };
 
-  getArticleById = async(id: string): Promise<NewsResponse> =>{
+  getArticleById = async (id: string): Promise<NewsResponse> => {
     try {
       const article = await prisma.article.findUnique({
         where: { id },
@@ -142,16 +142,16 @@ export class NewsService {
         healthStatus: HealthMonitoringService.getHealthStatus() as any,
       };
     }
-  }
+  };
 
-  getLatestArticles = async(): Promise<NewsResponse> =>{
+  getLatestArticles = async (): Promise<NewsResponse> => {
     try {
       const articlesFromDb = await prisma.article.findMany({
         orderBy: { scrapedAt: "desc" },
         take: 10,
       });
       const articles = articlesFromDb.map((a) => ({
-        ...a
+        ...a,
       }));
 
       return {
@@ -178,9 +178,9 @@ export class NewsService {
         healthStatus: HealthMonitoringService.getHealthStatus() as any,
       };
     }
-  }
+  };
 
-  getNewsBySource = async(sourceName: string): Promise<NewsResponse> =>{
+  getNewsBySource = async (sourceName: string): Promise<NewsResponse> => {
     try {
       const articlesFromDb = await prisma.article.findMany({
         where: { source: sourceName },
@@ -220,9 +220,9 @@ export class NewsService {
         ] as any,
       };
     }
-  }
+  };
 
-  searchNews = async(query: string): Promise<NewsResponse> =>{
+  searchNews = async (query: string): Promise<NewsResponse> => {
     try {
       const articlesFromDb = await prisma.article.findMany({
         where: {
@@ -261,13 +261,13 @@ export class NewsService {
         healthStatus: HealthMonitoringService.getHealthStatus() as any,
       };
     }
-  }
+  };
 
-  getStats = async(): Promise<{
+  getStats = async (): Promise<{
     articles: number;
     sources: number;
     lastScrape: Date | null;
-  }> =>{
+  }> => {
     try {
       const articlesCount = await prisma.article.count();
       const sources = await prisma.article.findMany({
@@ -286,9 +286,9 @@ export class NewsService {
       logger.error("Error in getStats:", error);
       return { articles: 0, sources: 0, lastScrape: null };
     }
-  }
+  };
 
-  getHealthStatus = async(): Promise<{ success: boolean; data: any }> =>{
+  getHealthStatus = async (): Promise<{ success: boolean; data: any }> => {
     try {
       const allStatuses = HealthMonitoringService.getHealthStatus() as any;
       const overallHealth = HealthMonitoringService.getOverallHealth();
@@ -311,21 +311,20 @@ export class NewsService {
         data: { error: errorMessage },
       };
     }
-  }
-  getAvailableCategories = async(): Promise<string[]> =>{
+  };
+  
+  getAvailableCategories = async (): Promise<string[]> => {
     try {
-      const categories = await prisma.article.findMany({
-        select: { category: true },
-        distinct: ["category"],
-        where: {
-          category: {
-            not: "",
-          },
-        },
-        orderBy: { category: "asc" },
-      });
+      const categories = await prisma.$queryRaw<Array<{ category: string }>>`
+      SELECT DISTINCT LOWER("category") as category
+      FROM "Article"
+      WHERE "category" <> ''
+      ORDER BY LOWER("category") ASC
+    `;
 
-      const categoryNames = categories.map((c) => c.category).filter(Boolean);
+      const categoryNames = categories
+        .map((c) => c.category.charAt(0).toUpperCase() + c.category.slice(1))
+        .filter(Boolean);
 
       logger.info(`Retrieved ${categoryNames.length} available categories`);
       return categoryNames;
@@ -335,5 +334,5 @@ export class NewsService {
       logger.error("Error in getAvailableCategories:", { error: errorMessage });
       return ["General"];
     }
-  }
+  };
 }
