@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { logger } from '../utils/logger-old-server';
+import { logger } from '../utils/logger';
 import { RssScraperService } from '../services/rss-scraper.service';
 import headlineHubBot from '../bot';
 

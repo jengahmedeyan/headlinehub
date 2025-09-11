@@ -12,7 +12,6 @@ import { RssScraperService } from "./services/rss-scraper.service";
 import headlineHubBot from "./bot";
 import { summaryRoutes } from "./routes/summary.route";
 import { healthRoutes } from "./routes/health.routes";
-import { operationsRoutes } from "./routes/operations.routes";
 
 const app = express();
 
@@ -26,8 +25,7 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 app.use("/api/news", newsRoutes);
 app.use('/api/summaries', summaryRoutes);
-app.use('/api/health', healthRoutes);
-app.use('/api/operations', operationsRoutes);
+app.use('/api/health', healthRoutes)
 
 app.use(notFoundHandler);
 app.use(errorHandler);
@@ -41,18 +39,13 @@ const startServer = () => {
     logger.info(`🌍 Environment: ${config.nodeEnv}`);
   });
 
-  // Only start bot and cron jobs in non-serverless environments
-  if (config.nodeEnv === 'development' || process.env.VERCEL !== '1') {
-    headlineHubBot.start();
+  headlineHubBot.start();
 
-    cron.schedule("0 * * * *", async () => {
-      logger.info("⏰ Starting scheduled RSS news scraping...");
-      await RssScraperService.scrapeAndSaveAllRssNews();
-      logger.info("✅ Scheduled RSS news scraping complete.");
-    });
-  } else {
-    logger.info("🔗 Running in serverless mode - bot and cron jobs disabled");
-  }
+  cron.schedule("0 * * * *", async () => {
+    logger.info("⏰ Starting scheduled RSS news scraping...");
+    await RssScraperService.scrapeAndSaveAllRssNews();
+    logger.info("✅ Scheduled RSS news scraping complete.");
+  });
 };
 
 process.on("SIGTERM", () => {
