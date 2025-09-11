@@ -119,7 +119,7 @@ export class HealthMonitoringController {
         ORDER BY total_articles DESC
       `;
 
-      const scoredData = performanceData.map((source) => {
+      const scoredData = performanceData.map((source: any) => {
         const expectedDailyArticles = 10;
         const actualDailyAvg = source.total_articles / Math.max(1, source.active_days);
         const performanceScore = Math.min(
@@ -144,10 +144,10 @@ export class HealthMonitoringController {
         summary: {
           total_sources: scoredData.length,
           avg_performance: Math.round(
-            scoredData.reduce((sum, s) => sum + s.performance_score, 0) / scoredData.length
+            scoredData.reduce((sum: number, s: any) => sum + s.performance_score, 0) / scoredData.length
           ),
           top_performer: scoredData[0]?.source,
-          needs_attention: scoredData.filter((s) => s.performance_score < 50).length,
+          needs_attention: scoredData.filter((s: any) => s.performance_score < 50).length,
         },
         timestamp: new Date().toISOString(),
       });

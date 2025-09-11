@@ -170,7 +170,7 @@ Summary:
         },
       });
 
-      return summaries.reduce((acc, summary) => {
+      return summaries.reduce((acc: Record<string, string>, summary: any) => {
         acc[summary.articleId] = summary.summary;
         return acc;
       }, {} as Record<string, string>);

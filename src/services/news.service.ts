@@ -50,7 +50,7 @@ export class NewsService {
         take: limit,
       });
 
-      const articles = articlesFromDb.map((a) => ({
+      const articles = articlesFromDb.map((a: any) => ({
         ...a,
         hash: a.hash ?? undefined,
       }));
@@ -60,7 +60,7 @@ export class NewsService {
         where,
         select: { source: true },
       });
-      const sources = [...new Set(allArticlesForSources.map((a) => a.source))];
+      const sources: string[] = Array.from(new Set(allArticlesForSources.map((a: any) => a.source).filter((source: any): source is string => typeof source === 'string')));
 
       const totalPages = Math.ceil(totalCount / limit);
       const pagination: PaginationMeta = {
@@ -150,7 +150,7 @@ export class NewsService {
         orderBy: { scrapedAt: "desc" },
         take: 10,
       });
-      const articles = articlesFromDb.map((a) => ({
+      const articles = articlesFromDb.map((a: any) => ({
         ...a,
       }));
 
@@ -158,7 +158,7 @@ export class NewsService {
         success: true,
         data: articles,
         count: articles.length,
-        sources: [...new Set(articles.map((a) => a.source))],
+        sources: Array.from(new Set(articles.map((a: any) => a.source).filter((source: any): source is string => typeof source === 'string'))),
         scrapedAt: new Date(),
         duplicatesRemoved: 0,
         healthStatus: HealthMonitoringService.getHealthStatus() as any,
@@ -186,7 +186,7 @@ export class NewsService {
         where: { source: sourceName },
         orderBy: { scrapedAt: "desc" },
       });
-      const articles = articlesFromDb.map((a) => ({
+      const articles = articlesFromDb.map((a: any) => ({
         ...a,
         hash: a.hash ?? undefined,
       }));
@@ -233,7 +233,7 @@ export class NewsService {
         },
         orderBy: { scrapedAt: "desc" },
       });
-      const articles = articlesFromDb.map((a) => ({
+      const articles = articlesFromDb.map((a: any) => ({
         ...a,
         hash: a.hash ?? undefined,
       }));
@@ -241,7 +241,7 @@ export class NewsService {
         success: true,
         data: articles,
         count: articles.length,
-        sources: [...new Set(articles.map((a) => a.source))],
+        sources: Array.from(new Set(articles.map((a: any) => a.source).filter((source: any): source is string => typeof source === 'string'))),
         scrapedAt: new Date(),
         duplicatesRemoved: 0,
         healthStatus: HealthMonitoringService.getHealthStatus() as any,
@@ -273,7 +273,7 @@ export class NewsService {
       const sources = await prisma.article.findMany({
         select: { source: true },
       });
-      const uniqueSources = [...new Set(sources.map((s) => s.source))];
+      const uniqueSources = [...new Set(sources.map((s: any) => s.source as string))];
       const lastArticle = await prisma.article.findFirst({
         orderBy: { scrapedAt: "desc" },
       });
@@ -323,7 +323,7 @@ export class NewsService {
     `;
 
       const categoryNames = categories
-        .map((c) => c.category.charAt(0).toUpperCase() + c.category.slice(1))
+        .map((c: any) => c.category.charAt(0).toUpperCase() + c.category.slice(1))
         .filter(Boolean);
 
       logger.info(`Retrieved ${categoryNames.length} available categories`);

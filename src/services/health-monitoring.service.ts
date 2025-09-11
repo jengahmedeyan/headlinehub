@@ -227,7 +227,7 @@ export class HealthMonitoringService {
         timestamp: now.toISOString(),
         summary: {
           totalArticles: basicStats.reduce(
-            (sum: number, stat) => sum + stat._count.id,
+            (sum: number, stat: any) => sum + stat._count.id,
             0
           ),
           uniqueSources: basicStats.length,
@@ -239,7 +239,7 @@ export class HealthMonitoringService {
         },
         sources: {
           breakdown: basicStats,
-          performance: performanceMetrics.map((source) => ({
+          performance: performanceMetrics.map((source: any) => ({
             name: source.source,
             articlesCount: source.count,
             avgContentLength: Math.round(source.avg_length || 0),
@@ -376,7 +376,7 @@ export class HealthMonitoringService {
 
       return {
         period: `${hours} hours`,
-        totalArticles: stats.reduce((sum, stat) => sum + stat._count.id, 0),
+        totalArticles: stats.reduce((sum: number, stat: any) => sum + stat._count.id, 0),
         sourceBreakdown: stats,
       };
     } catch (error) {
