@@ -32,6 +32,6 @@ export const config = {
     port: parseInt(process.env.PG_PORT || '5432'),
     user: process.env.PG_USER || 'postgres',
     password: process.env.PG_PASSWORD || '',
-    database: process.env.PG_DATABASE || 'gmscraper',
+    database: process.env.PG_DATABASE || 'headlinehub-db',
   },
 } as const;

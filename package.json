@@ -15,7 +15,15 @@
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "docker:build": "docker build -t headlinehub .",
+    "docker:run": "docker run -p 3000:3000 --env-file .env headlinehub",
+    "docker:dev": "docker-compose up --build",
+    "docker:dev:down": "docker-compose down",
+    "docker:prod": "docker-compose -f docker-compose.prod.yml up --build -d",
+    "docker:prod:down": "docker-compose -f docker-compose.prod.yml down",
+    "docker:logs": "docker-compose logs -f app",
+    "docker:shell": "docker-compose exec app sh"
   },
   "keywords": [
     "news",
@@ -45,7 +53,7 @@
     "node-cache": "^5.1.2",
     "node-cron": "^4.2.1",
     "node-telegram-bot-api": "^0.66.0",
-    "p-limit": "^6.2.0",
+    "p-limit": "^3.1.0",
     "pg": "^8.16.3",
     "puppeteer": "^24.15.0",
     "rimraf": "^6.0.1",
