@@ -1,0 +1,58 @@
+name: Bot Management
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Bot action (start/stop/restart)'
+        required: true
+        default: 'start'
+        type: choice
+        options:
+          - start
+          - stop
+          - restart
+          - status
+
+jobs:
+  manage-bot:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: |
+          npm ci
+          npx prisma generate
+      
+      - name: Execute bot action
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          case "${{ github.event.inputs.action }}" in
+            "start")
+              curl -X POST "${{ secrets.VERCEL_URL }}/api/operations/bot/start"
+              ;;
+            "stop")
+              curl -X POST "${{ secrets.VERCEL_URL }}/api/operations/bot/stop"
+              ;;
+            "restart")
+              curl -X POST "${{ secrets.VERCEL_URL }}/api/operations/bot/stop"
+              sleep 5
+              curl -X POST "${{ secrets.VERCEL_URL }}/api/operations/bot/start"
+              ;;
+            "status")
+              curl -X GET "${{ secrets.VERCEL_URL }}/api/operations/bot/status"
+              ;;
+          esac
