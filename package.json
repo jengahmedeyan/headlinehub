@@ -5,7 +5,6 @@
   "main": "app.js",
   "scripts": {
     "build": "prisma generate && tsc",
-    "postbuild": "copyfiles -u 2 \"src/generated/prisma/**/*\" dist/generated/",
     "start": "node dist/app.js",
     "dev": "ts-node-dev --respawn --transpile-only src/app.ts",
     "clean": "rimraf dist",
