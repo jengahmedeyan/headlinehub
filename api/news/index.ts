@@ -1,30 +1,57 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { NewsController } from '../../src/controllers/news.controller';
+import { VercelRequest, VercelResponse } from '@vercel/node';
+import { withApiWrapper, sendApiResponse, handleApiError } from '../_lib/api-helpers';
+import { NewsService } from '../../src/services/news.service';
 
-const newsController = new NewsController();
-
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
+async function handler(req: VercelRequest, res: VercelResponse) {
   try {
-    const mockReq = {
-      query: req.query,
-      params: {},
-      body: req.body
-    } as any;
+    const newsService = new NewsService();
+    const { date, page, limit } = req.query;
 
-    const mockRes = {
-      json: (data: any) => res.json(data),
-      status: (code: number) => ({
-        json: (data: any) => res.status(code).json(data)
-      })
-    } as any;
+    const pageNum = parseInt(page as string) || 1;
+    const limitNum = parseInt(limit as string) || 10;
 
-    return await newsController.getAllNews(mockReq, mockRes);
+    if (pageNum < 1) {
+      res.status(400).json({
+        success: false,
+        error: "Invalid page number",
+        message: "Page number must be greater than 0",
+        data: [],
+        count: 0,
+        sources: [],
+        scrapedAt: new Date(),
+        duplicatesRemoved: 0,
+      });
+      return;
+    }
+
+    if (limitNum < 1 || limitNum > 100) {
+      res.status(400).json({
+        success: false,
+        error: "Invalid limit",
+        message: "Limit must be between 1 and 100",
+        data: [],
+        count: 0,
+        sources: [],
+        scrapedAt: new Date(),
+        duplicatesRemoved: 0,
+      });
+      return;
+    }
+
+    const result = await newsService.getAllNews(
+      date as string | undefined,
+      pageNum,
+      limitNum
+    );
+
+    if (result.success) {
+      sendApiResponse(res, result);
+    } else {
+      res.status(500).json(result);
+    }
   } catch (error) {
-    console.error('API Error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    handleApiError(res, error as Error);
   }
 }
+
+export default withApiWrapper(handler, ['GET']);
