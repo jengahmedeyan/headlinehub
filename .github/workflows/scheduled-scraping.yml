@@ -1,0 +1,39 @@
+name: Scheduled News Scraping
+
+on:
+  schedule:
+    # Run every hour at minute 0
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+jobs:
+  scrape-news:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Trigger scraping via Vercel API
+        run: |
+          echo "🚀 Triggering news scraping via Vercel API..."
+          response=$(curl -s -X POST "${{ secrets.VERCEL_URL }}/api/operations/scrape" \
+            -H "Content-Type: application/json" \
+            -w "HTTP_CODE:%{http_code}" \
+            -d '{"source": "github-actions-scheduled"}')
+          
+          http_code=$(echo "$response" | grep -o "HTTP_CODE:[0-9]*" | cut -d: -f2)
+          response_body=$(echo "$response" | sed 's/HTTP_CODE:[0-9]*$//')
+          
+          echo "Response: $response_body"
+          echo "HTTP Code: $http_code"
+          
+          if [ "$http_code" -eq 200 ] || [ "$http_code" -eq 201 ]; then
+            echo "✅ Scraping triggered successfully"
+          else
+            echo "❌ Failed to trigger scraping"
+            exit 1
+          fi
+
+      - name: Wait and check scraping status
+        run: |
+          echo "⏳ Waiting 30 seconds for scraping to process..."
+          sleep 30
+          echo "✅ Scraping request completed"

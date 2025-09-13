@@ -1,0 +1,70 @@
+name: Bot Management
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Bot action (start/stop/restart/status)'
+        required: true
+        default: 'start'
+        type: choice
+        options:
+          - start
+          - stop
+          - restart
+          - status
+
+jobs:
+  manage-bot:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Execute bot action
+        run: |
+          echo "🤖 Executing bot action: ${{ github.event.inputs.action }}"
+          
+          case "${{ github.event.inputs.action }}" in
+            "start")
+              echo "🚀 Starting Telegram bot..."
+              response=$(curl -s -X POST "${{ secrets.VERCEL_URL }}/api/operations/bot/start" \
+                -H "Content-Type: application/json" \
+                -w "HTTP_CODE:%{http_code}")
+              ;;
+            "stop")
+              echo "🛑 Stopping Telegram bot..."
+              response=$(curl -s -X POST "${{ secrets.VERCEL_URL }}/api/operations/bot/stop" \
+                -H "Content-Type: application/json" \
+                -w "HTTP_CODE:%{http_code}")
+              ;;
+            "restart")
+              echo "🔄 Restarting Telegram bot..."
+              echo "  1. Stopping bot..."
+              curl -s -X POST "${{ secrets.VERCEL_URL }}/api/operations/bot/stop" \
+                -H "Content-Type: application/json"
+              sleep 5
+              echo "  2. Starting bot..."
+              response=$(curl -s -X POST "${{ secrets.VERCEL_URL }}/api/operations/bot/start" \
+                -H "Content-Type: application/json" \
+                -w "HTTP_CODE:%{http_code}")
+              ;;
+            "status")
+              echo "📊 Checking bot status..."
+              response=$(curl -s -X GET "${{ secrets.VERCEL_URL }}/api/operations/bot/status" \
+                -H "Content-Type: application/json" \
+                -w "HTTP_CODE:%{http_code}")
+              ;;
+          esac
+          
+          # Extract HTTP code and response body
+          http_code=$(echo "$response" | grep -o "HTTP_CODE:[0-9]*" | cut -d: -f2)
+          response_body=$(echo "$response" | sed 's/HTTP_CODE:[0-9]*$//')
+          
+          echo "Response: $response_body"
+          echo "HTTP Code: $http_code"
+          
+          if [ "$http_code" -eq 200 ] || [ "$http_code" -eq 201 ]; then
+            echo "✅ Bot action completed successfully"
+          else
+            echo "❌ Bot action failed"
+            exit 1
+          fi
