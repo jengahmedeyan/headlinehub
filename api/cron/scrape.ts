@@ -6,10 +6,13 @@ import { RssScraperService } from '../../src/services/rss-scraper.service';
 async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // Verify that this is a cron request (optional security measure)
-    const authHeader = req.headers.authorization;
-    if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      res.status(401).json({ error: 'Unauthorized' });
-      return;
+    // Skip auth check in development
+    if (process.env.NODE_ENV === 'production' && process.env.CRON_SECRET) {
+      const authHeader = req.headers.authorization;
+      if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
     }
 
     logger.info("📡 Cron job triggered RSS scraping");
