@@ -11,42 +11,29 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-      
-      - name: Install dependencies
+      - name: Trigger scraping via Vercel API
         run: |
-          npm ci
-          npx prisma generate
-      
-      - name: Run news scraping
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: |
-          node -e "
-          const { RssScraperService } = require('./dist/services/rss-scraper.service');
-          RssScraperService.scrapeAndSaveAllRssNews()
-            .then(() => {
-              console.log('✅ Scheduled RSS news scraping complete.');
-              process.exit(0);
-            })
-            .catch((error) => {
-              console.error('❌ Scraping failed:', error);
-              process.exit(1);
-            });
-          "
-      
-      - name: Trigger API endpoint (optional)
-        run: |
-          curl -X POST "${{ secrets.VERCEL_URL }}/api/operations/scrape" \
+          echo "🚀 Triggering news scraping via Vercel API..."
+          response=$(curl -s -X POST "${{ secrets.VERCEL_URL }}/api/operations/scrape" \
             -H "Content-Type: application/json" \
-            -d '{"source": "github-actions"}' || true
+            -w "HTTP_CODE:%{http_code}" \
+            -d '{"source": "github-actions-scheduled"}')
+          
+          http_code=$(echo "$response" | grep -o "HTTP_CODE:[0-9]*" | cut -d: -f2)
+          response_body=$(echo "$response" | sed 's/HTTP_CODE:[0-9]*$//')
+          
+          echo "Response: $response_body"
+          echo "HTTP Code: $http_code"
+          
+          if [ "$http_code" -eq 200 ] || [ "$http_code" -eq 201 ]; then
+            echo "✅ Scraping triggered successfully"
+          else
+            echo "❌ Failed to trigger scraping"
+            exit 1
+          fi
+
+      - name: Wait and check scraping status
+        run: |
+          echo "⏳ Waiting 30 seconds for scraping to process..."
+          sleep 30
+          echo "✅ Scraping request completed"

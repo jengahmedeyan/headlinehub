@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: 'Bot action (start/stop/restart)'
+        description: 'Bot action (start/stop/restart/status)'
         required: true
         default: 'start'
         type: choice
@@ -19,40 +19,52 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-      
-      - name: Install dependencies
-        run: |
-          npm ci
-          npx prisma generate
-      
       - name: Execute bot action
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
+          echo "🤖 Executing bot action: ${{ github.event.inputs.action }}"
+          
           case "${{ github.event.inputs.action }}" in
             "start")
-              curl -X POST "${{ secrets.VERCEL_URL }}/api/operations/bot/start"
+              echo "🚀 Starting Telegram bot..."
+              response=$(curl -s -X POST "${{ secrets.VERCEL_URL }}/api/operations/bot/start" \
+                -H "Content-Type: application/json" \
+                -w "HTTP_CODE:%{http_code}")
               ;;
             "stop")
-              curl -X POST "${{ secrets.VERCEL_URL }}/api/operations/bot/stop"
+              echo "🛑 Stopping Telegram bot..."
+              response=$(curl -s -X POST "${{ secrets.VERCEL_URL }}/api/operations/bot/stop" \
+                -H "Content-Type: application/json" \
+                -w "HTTP_CODE:%{http_code}")
               ;;
             "restart")
-              curl -X POST "${{ secrets.VERCEL_URL }}/api/operations/bot/stop"
+              echo "🔄 Restarting Telegram bot..."
+              echo "  1. Stopping bot..."
+              curl -s -X POST "${{ secrets.VERCEL_URL }}/api/operations/bot/stop" \
+                -H "Content-Type: application/json"
               sleep 5
-              curl -X POST "${{ secrets.VERCEL_URL }}/api/operations/bot/start"
+              echo "  2. Starting bot..."
+              response=$(curl -s -X POST "${{ secrets.VERCEL_URL }}/api/operations/bot/start" \
+                -H "Content-Type: application/json" \
+                -w "HTTP_CODE:%{http_code}")
               ;;
             "status")
-              curl -X GET "${{ secrets.VERCEL_URL }}/api/operations/bot/status"
+              echo "📊 Checking bot status..."
+              response=$(curl -s -X GET "${{ secrets.VERCEL_URL }}/api/operations/bot/status" \
+                -H "Content-Type: application/json" \
+                -w "HTTP_CODE:%{http_code}")
               ;;
           esac
+          
+          # Extract HTTP code and response body
+          http_code=$(echo "$response" | grep -o "HTTP_CODE:[0-9]*" | cut -d: -f2)
+          response_body=$(echo "$response" | sed 's/HTTP_CODE:[0-9]*$//')
+          
+          echo "Response: $response_body"
+          echo "HTTP Code: $http_code"
+          
+          if [ "$http_code" -eq 200 ] || [ "$http_code" -eq 201 ]; then
+            echo "✅ Bot action completed successfully"
+          else
+            echo "❌ Bot action failed"
+            exit 1
+          fi

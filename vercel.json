@@ -10,10 +10,17 @@
       "use": "@vercel/static"
     }
   ],
+  "crons": [
+    {
+      "path": "/api/cron/scrape",
+      "schedule": "0 * * * *"
+    }
+  ],
   "env": {
     "DATABASE_URL": "@database_url",
     "TELEGRAM_BOT_TOKEN": "@telegram_bot_token",
     "ELEVENLABS_API_KEY": "@elevenlabs_api_key",
-    "GEMINI_API_KEY": "@gemini_api_key"
+    "GEMINI_API_KEY": "@gemini_api_key",
+    "CRON_SECRET": "@cron_secret"
   }
 }
