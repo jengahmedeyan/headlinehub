@@ -12,6 +12,7 @@ import { RssScraperService } from "./services/rss-scraper.service";
 import headlineHubBot from "./bot";
 import { summaryRoutes } from "./routes/summary.route";
 import { healthRoutes } from "./routes/health.routes";
+import { operationsRoutes } from "./routes/operations.routes";
 
 const app = express();
 
@@ -25,7 +26,8 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 app.use("/api/news", newsRoutes);
 app.use('/api/summaries', summaryRoutes);
-app.use('/api/health', healthRoutes)
+app.use('/api/health', healthRoutes);
+app.use('/api/operations', operationsRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
