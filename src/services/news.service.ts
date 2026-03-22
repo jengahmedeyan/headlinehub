@@ -2,7 +2,7 @@ import { ScraperService } from "./scraper.service";
 import { HealthMonitoringService } from "./health-monitoring.service";
 import { NewsResponse, PaginationMeta } from "../models/article.model";
 import { logger } from "../utils/logger";
-import { format, subDays } from "date-fns";
+import { subDays } from "date-fns";
 import prisma from "../utils/prisma";
 
 export class NewsService {
@@ -15,52 +15,83 @@ export class NewsService {
   getAllNews = async (
     dateParam?: string,
     page: number = 1,
-    limit: number = 20
+    limit: number = 20,
+    source?: string,
+    category?: string,
+    q?: string
   ): Promise<NewsResponse> => {
     try {
-      const ARTICLE_DATE_FORMAT = "MMMM d, yyyy";
-      let targetDateString: string | undefined = undefined;
+      // Resolve the date param to a UTC day range on the scrapedAt DateTime column,
+      // which is consistent across both scrapers (unlike the raw `date` string field).
+      let dateRange: { gte: Date; lt: Date } | undefined;
 
       if (dateParam) {
-        if (dateParam.toLowerCase() === "today") {
-          targetDateString = format(new Date(), ARTICLE_DATE_FORMAT);
-        } else if (dateParam.toLowerCase() === "yesterday") {
-          targetDateString = format(
-            subDays(new Date(), 1),
-            ARTICLE_DATE_FORMAT
-          );
+        let targetDate: Date;
+        const lower = dateParam.toLowerCase();
+        if (lower === "today") {
+          targetDate = new Date();
+        } else if (lower === "yesterday") {
+          targetDate = subDays(new Date(), 1);
         } else {
-          targetDateString = dateParam;
+          // Accept YYYY-MM-DD or any string parseable by Date
+          targetDate = new Date(dateParam);
+        }
+
+        if (!isNaN(targetDate.getTime())) {
+          const start = new Date(targetDate);
+          start.setUTCHours(0, 0, 0, 0);
+          const end = new Date(start);
+          end.setUTCDate(end.getUTCDate() + 1);
+          dateRange = { gte: start, lt: end };
+        } else {
+          logger.warn(`Invalid date param ignored: ${dateParam}`);
         }
       }
 
-      const where: any = {};
-      if (targetDateString) {
-        where.date = targetDateString;
+      // Build AND conditions so q's OR clause doesn't escape the other filters
+      const andConditions: any[] = [];
+      if (dateRange) {
+        andConditions.push({ scrapedAt: dateRange });
       }
+      if (source) {
+        andConditions.push({ source: { contains: source, mode: "insensitive" } });
+      }
+      if (category) {
+        andConditions.push({ category: { contains: category, mode: "insensitive" } });
+      }
+      if (q) {
+        andConditions.push({
+          OR: [
+            { title: { contains: q, mode: "insensitive" } },
+            { content: { contains: q, mode: "insensitive" } },
+          ],
+        });
+      }
+      const where: any = andConditions.length ? { AND: andConditions } : {};
 
       const skip = (page - 1) * limit;
 
-      const totalCount = await prisma.article.count({ where });
-
-      const articlesFromDb = await prisma.article.findMany({
-        where,
-        orderBy: { scrapedAt: "desc" },
-        skip,
-        take: limit,
-      });
+      const [totalCount, articlesFromDb, sourceGroups] = await Promise.all([
+        prisma.article.count({ where }),
+        prisma.article.findMany({
+          where,
+          orderBy: { scrapedAt: "desc" },
+          skip,
+          take: limit,
+        }),
+        prisma.article.groupBy({
+          by: ["source"],
+          where,
+          orderBy: { source: "asc" },
+        }),
+      ]);
 
       const articles = articlesFromDb.map((a: any) => ({
         ...a,
         hash: a.hash ?? undefined,
       }));
 
-      // TODO: optimize this for large datasets
-      const allArticlesForSources = await prisma.article.findMany({
-        where,
-        select: { source: true },
-      });
-      const sources: string[] = Array.from(new Set(allArticlesForSources.map((a: any) => a.source).filter((source: any): source is string => typeof source === 'string')));
+      const sources: string[] = sourceGroups.map((g: any) => g.source);
 
       const totalPages = Math.ceil(totalCount / limit);
       const pagination: PaginationMeta = {
@@ -81,6 +112,12 @@ export class NewsService {
         duplicatesRemoved: 0,
         healthStatus: HealthMonitoringService.getHealthStatus() as any,
         pagination,
+        appliedFilters: {
+          ...(dateRange && { date: dateParam }),
+          ...(source && { source }),
+          ...(category && { category }),
+          ...(q && { q }),
+        },
       };
     } catch (error) {
       const errorMessage =
