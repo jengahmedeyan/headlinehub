@@ -7,3 +7,5 @@ logs/
 request/
 
 /src/generated/prisma
+
+.vercel
