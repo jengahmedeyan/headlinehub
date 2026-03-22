@@ -5,6 +5,7 @@ const operationsRoutes = Router();
 
 // RSS Scraping endpoints
 operationsRoutes.post('/scrape', OperationsController.triggerRssScraping);
+operationsRoutes.post('/ai-scrape', OperationsController.triggerAiScraping);
 
 // Bot management endpoints
 operationsRoutes.post('/bot/start', OperationsController.startBot);

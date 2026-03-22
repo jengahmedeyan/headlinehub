@@ -1,9 +1,41 @@
 import { Request, Response } from 'express';
 import { logger } from '../utils/logger';
 import { RssScraperService } from '../services/rss-scraper.service';
+import { AiScraperService } from '../services/ai-scraper.service';
 import headlineHubBot from '../bot';
 
 export class OperationsController {
+  // Endpoint to trigger AI scraping manually (for testing)
+  static triggerAiScraping = async (req: Request, res: Response) => {
+    try {
+      logger.info("🤖 Manual AI scraping triggered via API");
+
+      const startTime = new Date();
+      AiScraperService.scrapeAndSaveAllAiSources()
+        .then((result) => {
+          const duration = new Date().getTime() - startTime.getTime();
+          logger.info(`✅ Manual AI scraping completed in ${duration}ms`, result);
+        })
+        .catch((error) => {
+          logger.error("❌ Manual AI scraping failed:", error);
+        });
+
+      res.json({
+        status: 'success',
+        message: 'AI scraping initiated',
+        timestamp: startTime.toISOString(),
+        note: 'Scraping is running in the background',
+      });
+    } catch (error: any) {
+      logger.error("Error triggering AI scraping:", error);
+      res.status(500).json({
+        status: 'error',
+        message: 'Failed to trigger AI scraping',
+        error: error.message,
+      });
+    }
+  };
+
   // Endpoint to trigger RSS scraping manually
   static triggerRssScraping = async (req: Request, res: Response) => {
     try {

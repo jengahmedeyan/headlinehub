@@ -12,7 +12,7 @@ export class NewsController {
   // GET /api/news
   getAllNews = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { date, page, limit } = req.query;
+      const { date, page, limit, source, category, q } = req.query;
 
       const pageNum = parseInt(page as string) || 1;
       const limitNum = parseInt(limit as string) || 10;
@@ -48,7 +48,10 @@ export class NewsController {
       const result = await this.newsService.getAllNews(
         date as string | undefined,
         pageNum,
-        limitNum
+        limitNum,
+        source as string | undefined,
+        category as string | undefined,
+        q as string | undefined
       );
 
       if (result.success) {

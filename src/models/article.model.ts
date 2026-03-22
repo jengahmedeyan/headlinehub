@@ -63,6 +63,12 @@ export interface NewsResponse {
   healthStatus?: any;
   error?: string;
   pagination?: PaginationMeta;
+  appliedFilters?: {
+    date?: string;
+    source?: string;
+    category?: string;
+    q?: string;
+  };
 }
 
 export interface SourceHealthStatus {
